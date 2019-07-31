@@ -1,0 +1,104 @@
+#!/bin/bash
+
+. $NEEDSOME_INIT_HOME/lib/colored
+
+function start_coverage {
+	needsome_test_coverage="$1"
+	rm -f "$needsome_test_coverage"
+	export BASH_XTRACEFD
+	exec {BASH_XTRACEFD}>>"$1"
+	export PS4='~|${BASH_SOURCE}|${LINENO}|'
+	set -x
+	export SHELLOPTS
+}
+
+function end_coverage {
+	set +x
+	exec {BASH_XTRACEFD}>&2
+	coverage="$(_connect_coverage)"
+	echo "$coverage" >> "$1"
+}
+
+function _connect_coverage {
+	connect1="$(
+		currentfile=
+		currentline=0
+		while read line; do
+			if [ "$(echo "$line" | cut -c 1)" != "~" ]; then
+				echo ">>"$currentfile"|"$currentline"|"$line
+			else
+				currentfile="$(echo "$line" | cut -d "|" -f 2)"
+				currentline="$(echo "$line" | cut -d "|" -f 3)"
+				echo "$line" | cut -d "|" -f 2-
+			fi
+		done < "$needsome_test_coverage"
+	)"
+	connect2="$(
+		wasmultiline=0
+		currentfile=
+		currentline=0
+		amendedline=0
+		while read line;do
+			curline="$line"
+			if [ "$(echo "$line" | cut -c 1)" = ">" ]; then
+				curline="$(echo "$line" | cut -c 3-)"
+			fi
+			declaredfile="$(echo "$curline" | cut -d "|" -f 1)"
+			declaredline="$(echo "$curline" | cut -d "|" -f 2)"
+			declaredcontent="$(echo "$curline" | cut -d "|" -f 3)"
+			if [ "$declaredfile" = "$currentfile" -a "$declaredline" = "$currentline" -a "$wasmultiline" ]; then
+				amendedline="$(( $amendedline - 1 ))"
+			else
+				amendedline="$declaredline"
+			fi
+			currentfile="$declaredfile"
+			currentline="$declaredline"
+			if [ "$(echo "$line" | cut -c 1)" = ">" ]; then
+				wasmultiline=1
+			else
+				wasmultiline=0
+			fi
+			absolutefile="$(cd "$(dirname "$declaredfile")"; pwd -P)"/"$(basename "$declaredfile")"
+			echo $absolutefile"|"$amendedline"|"$declaredcontent
+		done < <(echo "$connect1" | tac) | tac
+	)"
+	echo "$connect2" | grep -vF "$NEEDSOME_TEST_HOME
+$NEEDSOME_INIT_HOME
+$(which need-some-init)
+$TEMPDIR/exec" | cat
+}
+
+function _show_coverage {
+	covcont="$(cat "$@")"
+	files="$(echo "$covcont" | cut -d "|" -f 1 | uniq | sort | uniq)"
+	for file in $files; do
+		echo $file
+		lineno=1
+		countnonempty=0
+		countmatched=0
+		while IFS= read line; do
+			hit="$(echo "$covcont" | grep -F "$file|$lineno|" | wc -l )"
+			trimmed="$(echo $line | sed -e s/function[^#{]*'\({\|$\)/;/g')"
+			trimmedx="$(echo ";"$trimmed";" | sed -e "s/fi;//g" | sed -e "s/done;//g" | sed -e "s/{//g" | sed -e "s/}//g" | tr -s ";" ";" )"
+			if [ "$hit" -gt 0 ]; then
+				color="${GREEN}"
+				countnonempty=$(( $countnonempty + 1 ))
+				countmatched=$(( $countmatched + 1 ))
+			elif [ -z "$trimmed" -o \
+				"$trimmedx" = ";" -o \
+				"$(echo "$trimmed" | cut -c 1)" = "#" ]; then
+				color=""
+				hit=
+			else
+				color="${RED}"
+				countnonempty=$(( $countnonempty + 1 ))
+			fi
+			echo -e "${color}$lineno\t$hit\t$line${NORMAL}"
+			lineno=$(( $lineno + 1 ))
+		done < "$file"
+		echo "covered $countmatched/$countnonempty ($(( 100 * $countmatched / $countnonempty  ))%)"
+		echo
+	done
+}
+
+

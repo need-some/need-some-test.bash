@@ -1,0 +1,108 @@
+
+. ${NEEDSOME_TEST_HOME}/lib/bashunit-coverage
+
+TEMPDIRBASE=/tmp/bashunit
+TEMPDIR="$TEMPDIRBASE/$$"
+
+rm -rf "$TEMPDIR"
+mkdir -p "$TEMPDIR"
+
+COUNTSUM=0
+COUNTSUCC=0
+COUNTFAIL=0
+COUNTERROR=0
+COUNTSKIPPED=0
+
+function xit {
+	COUNTSUM=$(( $COUNTSUM + 1 ))
+	COUNTSKIPPED=$(( $COUNTSKIPPED + 1 ))
+	call_extended_status "$1" skipit
+}
+
+function it {
+	COUNTSUM=$(( $COUNTSUM + 1 ))
+	start_coverage "$TEMPDIR/temp_coverage"
+
+	if [ ! -z "$2" -a "$2" != "-" ]; then
+		casename="$1"
+		shift
+		call_extended_status "$casename" execit "$casename" "$local_beforestack
+$@"
+		returncode=$?
+	else
+		var="$(cat)"
+		call_extended_status "$1" execit "$1" "$local_beforestack
+$var"
+		returncode=$?
+	fi
+
+	if [ "$returncode" = 0 ]; then
+		COUNTSUCC=$(( $COUNTSUCC + 1 ))
+	elif [ "$returncode" = 1 ]; then
+		COUNTFAIL=$(( $COUNTFAIL + 1 ))
+	else
+		COUNTERROR=$(( $COUNTERROR + 1 ))
+	fi
+
+	end_coverage "$TEMPDIR/coverage"
+	return $returncode
+}
+
+export -f it
+
+function before {
+	local_beforestack="$1"
+}
+
+export -f before
+
+function init_beforestack {
+	local_beforestack=""
+}
+
+export -f init_beforestack
+
+function execit {
+	cmd="$2"
+	echo "#!/bin/bash" > "$TEMPDIR/exec"
+
+init_extended_status
+	echo "set -e" >> "$TEMPDIR/exec"
+	if [ ! -z "$cmd" ]; then
+		echo "$cmd" >> "$TEMPDIR/exec"
+	fi
+	chmod +x "$TEMPDIR/exec"
+
+	errors=$( . $TEMPDIR/exec )
+	result=$?
+	if [ "$result" -ne 0 ]; then
+		if [ -z "$errors" ]; then
+			errors="unknown error level $result"
+			state="error"
+			returncode=2
+		else
+			state="fail"
+			returncode=1
+		fi
+		level="ERROR"
+	else
+		state="pass"
+		level="OK"
+		returncode=0
+	fi
+	set_extended_status "$level" "$state" "$errors"
+
+	close_extended_status
+
+	return $returncode
+}
+
+function skipit {
+	init_extended_status
+	state="skip"
+	level="WARN"
+	set_extended_status "$level" "$state" "skipped test"
+
+	close_extended_status
+}
+

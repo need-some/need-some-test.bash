@@ -1,0 +1,10 @@
+function assert {
+        desc="$1"
+        shift
+        if ! ( test "$@" ); then
+                echo $desc $@ failed
+                exit 1
+        fi
+}
+export -f assert
+

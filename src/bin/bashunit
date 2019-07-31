@@ -1,0 +1,51 @@
+#!/bin/bash
+
+. need-some-init 
+. ${NEEDSOME_TEST_HOME}/lib/bashunit-coverage
+. ${NEEDSOME_TEST_HOME}/lib/bashunit-functions
+. ${NEEDSOME_TEST_HOME}/lib/bashunit-asserts
+. $NEEDSOME_INIT_HOME/lib/colored
+
+function callfile() {
+	export NEEDSOME_TEST_TESTCASE="$1"
+	export NEEDSOME_TEST_TESTCASE_DIR="$(cd "$(dirname "$1")"; pwd -P)"
+	init_beforestack
+	. $1
+}
+
+if [ -d "$1" ]; then
+	dir="$1"
+elif [ -f "$1" ]; then
+	callfile "$1"
+elif [ ! -z "$1" ]; then
+	echo "$1 is not a file or directory"
+	exit 1
+else
+	dir="$PWD"
+fi
+
+pattern="^.*.bashunit"
+
+if [ ! -z "$dir" ]; then
+	for file in $(find $dir -type f | grep -E "$pattern"); do
+		callfile $file
+	done
+fi
+	
+_show_coverage "$TEMPDIR/coverage"
+
+report_extended_status
+
+colsucc=$GREEN
+if [ $COUNTSUCC -eq 0 ]; then colsucc=$NORMAL; fi
+colfail=$RED
+if [ $COUNTFAIL -eq 0 ]; then colfail=$NORMAL; fi
+colerror=$RED
+if [ $COUNTERROR -eq 0 ]; then colerror=$NORMAL; fi
+colskip=$YELLOW
+if [ $COUNTSKIPPED -eq 0 ]; then colskip=$NORMAL; fi
+
+echo -e Tests:$COUNTSUM ${colsucc}Success:$COUNTSUCC$NORMAL ${colfail}Failure:$COUNTFAIL$NORMAL ${colerror}Error: $COUNTERROR$NORMAL ${colskip}Skipped: $COUNTSKIPPED$NORMAL
+
+exit $returncode
+
