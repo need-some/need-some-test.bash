@@ -1,0 +1,5 @@
+it "doit" '
+result="$($NEEDSOME_TEST_TESTCASE_DIR/afunction 1)"
+assert "equal" "'"$expected"'" = "$result"
+'
+

@@ -1,0 +1,18 @@
+#!/bin/bash
+
+function add() {
+	a=$1
+	a1=$(( $a + 1 ))
+	b=$2
+	b1=$(( $b - 1 ))
+	echo $(( $a + $b ))
+}
+
+function sub() {
+	a=$1
+	a1=$(( $a + 1 ))
+	b=$2
+	b1=$(( $b - 1 ))
+	echo $(( $a - $b ))
+}
+

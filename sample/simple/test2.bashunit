@@ -1,0 +1,19 @@
+#!/bin/bash
+
+before '
+	. "$NEEDSOME_TEST_TESTCASE_DIR/testee"
+'
+
+it "do the sum test 1 1" '
+	result=$(add 1 1)
+	expected=2
+	assert "equal" $expected -eq $result
+'
+
+it "do the sub test 3 2" '
+	result=$(sub 3 2)
+	expected=1
+	assert "equal" $expected -eq $result
+'
+
+

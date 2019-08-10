@@ -7,7 +7,7 @@ function start_coverage {
 	rm -f "$needsome_test_coverage"
 	export BASH_XTRACEFD
 	exec {BASH_XTRACEFD}>>"$1"
-	export PS4='~|${BASH_SOURCE}|${LINENO}|'
+	export PS4='~|${BASH_SOURCE}|${LINENO}|COMMANDSTART|${BASH_COMMAND}|COMMANDEND|'
 	set -x
 	export SHELLOPTS
 }
@@ -23,13 +23,18 @@ function _connect_coverage {
 	connect1="$(
 		currentfile=
 		currentline=0
+		connectline=0
 		while read line; do
-			if [ "$(echo "$line" | cut -c 1)" != "~" ]; then
-				echo ">>"$currentfile"|"$currentline"|"$line
-			else
+			if [ "$(echo "$line" | cut -c 1)" = "~" ]; then
 				currentfile="$(echo "$line" | cut -d "|" -f 2)"
 				currentline="$(echo "$line" | cut -d "|" -f 3)"
 				echo "$line" | cut -d "|" -f 2-
+				connectline=1
+			elif [ "$connectline" -eq 1 ]; then
+				echo ">>"$currentfile"|"$currentline"|"$line
+			fi
+			if ( echo "$line" | grep -q COMMANDEND ); then
+				connectline=0
 			fi
 		done < "$needsome_test_coverage"
 	)"

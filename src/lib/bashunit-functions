@@ -4,7 +4,7 @@
 TEMPDIRBASE=/tmp/bashunit
 TEMPDIR="$TEMPDIRBASE/$$"
 
-rm -rf "$TEMPDIR"
+rm -rf "$TEMPDIRBASE"
 mkdir -p "$TEMPDIR"
 
 COUNTSUM=0
@@ -21,7 +21,9 @@ function xit {
 
 function it {
 	COUNTSUM=$(( $COUNTSUM + 1 ))
-	start_coverage "$TEMPDIR/temp_coverage"
+	if [ -z "$skipcoverage" ]; then
+		start_coverage "$TEMPDIR/temp_coverage"
+	fi
 
 	if [ ! -z "$2" -a "$2" != "-" ]; then
 		casename="$1"
@@ -44,7 +46,9 @@ $var"
 		COUNTERROR=$(( $COUNTERROR + 1 ))
 	fi
 
-	end_coverage "$TEMPDIR/coverage"
+	if [ -z "$skipcoverage" ]; then
+		end_coverage "$TEMPDIR/coverage"
+	fi
 	return $returncode
 }
 

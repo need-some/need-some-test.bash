@@ -13,6 +13,15 @@ function callfile() {
 	. $1
 }
 
+while true; do
+	if [ "$1" = "--nocoverage" ]; then
+		export skipcoverage=1
+		shift
+	else
+		break
+	fi
+done
+
 if [ -d "$1" ]; then
 	dir="$1"
 elif [ -f "$1" ]; then
@@ -31,8 +40,10 @@ if [ ! -z "$dir" ]; then
 		callfile $file
 	done
 fi
-	
-_show_coverage "$TEMPDIR/coverage"
+
+if [ -z "$skipcoverage" ]; then
+	_show_coverage "$TEMPDIR/coverage"
+fi
 
 report_extended_status
 

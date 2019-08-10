@@ -1,0 +1,23 @@
+
+a="$1"
+
+if [ ! -z "$a" ]; then
+	echo "$a"
+	a="hallo
+welt
+oh
+je
+mi
+ne"
+	if [ "1" = "2" ]; then
+		echo uncovered
+	fi
+	if [ ! -z "$a" ]; then
+		echo "$a"
+	else
+		echo "oh nein"
+	fi
+else
+	echo "oh nein"
+fi
+
