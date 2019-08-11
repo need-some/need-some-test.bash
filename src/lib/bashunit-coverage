@@ -36,7 +36,10 @@ function _connect_coverage {
 			if ( echo "$line" | grep -q COMMANDEND ); then
 				connectline=0
 			fi
-		done < "$needsome_test_coverage"
+		done < "$needsome_test_coverage" | grep -vF "$NEEDSOME_TEST_HOME
+$NEEDSOME_INIT_HOME
+$(which need-some-init)
+$TEMPDIR/exec" | cat
 	)"
 	connect2="$(
 		wasmultiline=0
@@ -67,10 +70,7 @@ function _connect_coverage {
 			echo $absolutefile"|"$amendedline"|"$declaredcontent
 		done < <(echo "$connect1" | tac) | tac
 	)"
-	echo "$connect2" | grep -vF "$NEEDSOME_TEST_HOME
-$NEEDSOME_INIT_HOME
-$(which need-some-init)
-$TEMPDIR/exec" | cat
+	echo "$connect2"
 }
 
 function _show_coverage {
@@ -84,7 +84,7 @@ function _show_coverage {
 		while IFS= read line; do
 			hit="$(echo "$covcont" | grep -F "$file|$lineno|" | wc -l )"
 			trimmed="$(echo $line | sed -e s/function[^#{]*'\({\|$\)/;/g')"
-			trimmedx="$(echo ";"$trimmed";" | sed -e "s/fi;//g" | sed -e "s/done;//g" | sed -e "s/{//g" | sed -e "s/}//g" | tr -s ";" ";" )"
+			trimmedx="$(echo ";"$trimmed";" | sed -e "s/fi;//g" | sed -e "s/done;//g" | sed -e "s/else;//g" | sed -e "s/{//g" | sed -e "s/}//g" | tr -s ";" ";" )"
 			if [ "$hit" -gt 0 ]; then
 				color="${GREEN}"
 				countnonempty=$(( $countnonempty + 1 ))
