@@ -1,19 +1,21 @@
 #!/bin/bash
 
-before '
+function before() {
 	. "$NEEDSOME_TEST_TESTCASE_DIR/testee"
-'
+}
 
-it "do the sum test 1 1" '
+function sum11() {
+	@testName "do the sum test 1 1"
 	result=$(add 1 1)
 	expected=2
 	assert "equal" $expected -eq $result
-'
+}
 
-it "do the sum test 1 2" '
+function sum12() {
+	@testName do the sum test 1 2
 	result=$(add 1 2)
 	expected=2
 	assert "equal" $expected -eq $result
-'
+}
 
 

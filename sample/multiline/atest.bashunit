@@ -1,5 +1,12 @@
-it "doit" '
-result="$($NEEDSOME_TEST_TESTCASE_DIR/afunction 1)"
-assert "equal" "'"$expected"'" = "$result"
-'
+function doit(){
+	result="$($NEEDSOME_TEST_TESTCASE_DIR/afunction 1)"
+	expected="1
+hallo
+welt
+oh
+je
+mi
+ne"
+	assert "equal" "$expected" = "$result"
+}
 

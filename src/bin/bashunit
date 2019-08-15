@@ -6,13 +6,6 @@
 . ${NEEDSOME_TEST_HOME}/lib/bashunit-asserts
 . $NEEDSOME_INIT_HOME/lib/colored
 
-function callfile() {
-	export NEEDSOME_TEST_TESTCASE="$1"
-	export NEEDSOME_TEST_TESTCASE_DIR="$(cd "$(dirname "$1")"; pwd -P)"
-	init_beforestack
-	. $1
-}
-
 while true; do
 	if [ "$1" = "--nocoverage" ]; then
 		export skipcoverage=1

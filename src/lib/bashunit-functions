@@ -1,3 +1,4 @@
+#!/bin/bash
 
 . ${NEEDSOME_TEST_HOME}/lib/bashunit-coverage
 
@@ -13,30 +14,89 @@ COUNTFAIL=0
 COUNTERROR=0
 COUNTSKIPPED=0
 
-function xit {
-	COUNTSUM=$(( $COUNTSUM + 1 ))
-	COUNTSKIPPED=$(( $COUNTSKIPPED + 1 ))
-	call_extended_status "$1" skipit
+function getfunctions() {
+	set | grep -F ' () ' | grep -E '() $' | sort | sed -e 's/ () //'
 }
 
-function it {
+function callfile() { 
+	export NEEDSOME_TEST_TESTCASE="$(basename "$1" .bashunit)"
+	export NEEDSOME_TEST_TESTCASE_DIR="$(cd "$(dirname "$1")"; pwd -P)"
+	export NEEDSOME_TESTEE_DIR="$(echo "$NEEDSOME_TEST_TESTCASE_DIR" | sed -e "s#/test/#/src/#")"
+	export NEEDSOME_TESTEE="$NEEDSOME_TESTEE_DIR/$NEEDSOME_TEST_TESTCASE"
+	functionsbefore="$(getfunctions)"
+	. $1
+	functionsnew="$(getfunctions)"
+	fct="$(diff <(echo "$functionsbefore") <(echo "$functionsnew") | grep -E "^>" | cut -c 3- | grep -v " function ")"
+	before_x="$(echo "$fct" | grep -E '^before$' | cat)"
+	after_x="$(echo "$fct" | grep -E '^after$' | cat)"
+	for t in $(echo "$fct" | grep -vE '^before$' | grep -vE '^after$' | cat); do
+		methodbody="$(declare -f $t | head -n -1 | tail -n +3)"
+		notest="$(echo "$methodbody" | grep -E "^\\s*@noTest\\s*;\\s*$" )"
+		if [ -z "$notest" ]; then
+			origtestname="$(echo "$methodbody" | grep -E "^\\s*@testName\\s+" | xargs | cut -d " " -f 2- | cat | tr -d "\"';")"
+			skipped="$(echo "$methodbody" | grep -E "^\\s*@skip\\s*;\\s*$" )"
+			parameters="$(echo "$methodbody" | grep -E "^\\s*@parameters\\s+" | sed -e 's/\s*@parameters//' | sed -e 's/;$//')"
+			while read paramline; do
+				paramline="$(echo "$paramline" | sed -e 's/\\n/\n/g' | sed -e 's/\\t/\t/g')"
+				testname="$origtestname"
+				if [ -z "$testname" ]; then
+					testname="$NEEDSOME_TEST_TESTCASE-$t"
+				else
+					testname="$(
+						eval "set -- $paramline
+							echo $testname"
+					)"
+				fi
+				if [ -z "$skipped" ]; then
+					echo call test "$t $paramline" "$before_x" "$after_x" "$testname"
+					callmethod "$t $paramline" "$before_x" "$after_x" "$testname"
+				else
+					COUNTSUM=$(( $COUNTSUM + 1 ))
+					COUNTSKIPPED=$(( $COUNTSKIPPED + 1 ))
+					call_extended_status "$testname" skipit
+				fi
+			done < <(echo "$parameters")
+		fi
+	done
+	for t in "$fct"; do
+		unset $t
+	done
+}
+
+function @testName() {
+	return 0
+}
+
+function @skip() {
+	return 0
+}
+
+function @noTest() {
+	return 0
+}
+
+function @parameters() {
+	return 0
+}
+
+function callmethod() {
+	testcmd=""
+	if [ ! -z "$2" ]; then
+		testcmd="before
+"
+	fi
+	testcmd="${testcmd}$1"
+	if [ ! -z "$3" ]; then
+		testcmd="${testcmd}
+after"
+	fi
 	COUNTSUM=$(( $COUNTSUM + 1 ))
 	if [ -z "$skipcoverage" ]; then
 		start_coverage "$TEMPDIR/temp_coverage"
 	fi
 
-	if [ ! -z "$2" -a "$2" != "-" ]; then
-		casename="$1"
-		shift
-		call_extended_status "$casename" execit "$casename" "$local_beforestack
-$@"
-		returncode=$?
-	else
-		var="$(cat)"
-		call_extended_status "$1" execit "$1" "$local_beforestack
-$var"
-		returncode=$?
-	fi
+	call_extended_status "$4" execit "$testcmd"
+	returncode=$?
 
 	if [ "$returncode" = 0 ]; then
 		COUNTSUCC=$(( $COUNTSUCC + 1 ))
@@ -52,22 +112,8 @@ $var"
 	return $returncode
 }
 
-export -f it
-
-function before {
-	local_beforestack="$1"
-}
-
-export -f before
-
-function init_beforestack {
-	local_beforestack=""
-}
-
-export -f init_beforestack
-
 function execit {
-	cmd="$2"
+	cmd="$1"
 	echo "#!/bin/bash" > "$TEMPDIR/exec"
 
 init_extended_status

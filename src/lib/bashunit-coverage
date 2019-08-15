@@ -86,9 +86,14 @@ function _show_coverage {
 			trimmed="$(echo $line | sed -e s/function[^#{]*'\({\|$\)/;/g')"
 			trimmedx="$(echo ";"$trimmed";" | sed -e "s/fi;//g" | sed -e "s/done;//g" | sed -e "s/else;//g" | sed -e "s/{//g" | sed -e "s/}//g" | tr -s ";" ";" )"
 			if [ "$hit" -gt 0 ]; then
-				color="${GREEN}"
-				countnonempty=$(( $countnonempty + 1 ))
-				countmatched=$(( $countmatched + 1 ))
+				if [ "$(echo $line | cut -c 1)" = "@" ]; then
+					color=""
+					hit=
+				else
+					color="${GREEN}"
+					countnonempty=$(( $countnonempty + 1 ))
+					countmatched=$(( $countmatched + 1 ))
+				fi
 			elif [ -z "$trimmed" -o \
 				"$trimmedx" = ";" -o \
 				"$(echo "$trimmed" | cut -c 1)" = "#" ]; then

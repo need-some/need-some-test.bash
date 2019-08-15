@@ -1,0 +1,16 @@
+#!/bin/bash
+
+function notest() {
+	@noTest
+	exit 4
+}
+
+function testskipped() {
+	@skip
+	exit 4
+}
+
+function testNotSkipped() {
+	exit 4
+}
+
