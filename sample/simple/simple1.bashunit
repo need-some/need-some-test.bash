@@ -1,18 +1,23 @@
 #!/bin/bash
 
+#include testee before each test
 function before() {
 	. "$NEEDSOME_TEST_TESTCASE_DIR/testee"
 }
 
-function sum11() {
-	@testName "do the sum test 1 1"
+function success-empty() {
+	@testName "successful empty"
+}
+
+function success-assert() {
+	@testName "successful assert"
 	result=$(add 1 1)
 	expected=2
 	assert "equal" $expected -eq $result
 }
 
-function sum12() {
-	@testName do the sum test 1 2
+function failing-assert() {
+	@testName fail when asserting
 	result=$(add 1 2)
 	expected=2
 	assert "equal" $expected -eq $result

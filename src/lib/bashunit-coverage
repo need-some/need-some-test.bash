@@ -39,8 +39,10 @@ function _connect_coverage {
 		done < "$needsome_test_coverage" | grep -vF "$NEEDSOME_TEST_HOME
 $NEEDSOME_INIT_HOME
 $(which need-some-init)
-$TEMPDIR/exec" | cat
+$TEMPDIR/exec
+$TEMPDIR/mockpath" | cat
 	)"
+echo "$connect1" > "$needsome_test_coverage".x
 	connect2="$(
 		wasmultiline=0
 		currentfile=
@@ -54,7 +56,7 @@ $TEMPDIR/exec" | cat
 			declaredfile="$(echo "$curline" | cut -d "|" -f 1)"
 			declaredline="$(echo "$curline" | cut -d "|" -f 2)"
 			declaredcontent="$(echo "$curline" | cut -d "|" -f 3)"
-			if [ "$declaredfile" = "$currentfile" -a "$declaredline" = "$currentline" -a "$wasmultiline" ]; then
+			if [ "$declaredfile" = "$currentfile" -a "$declaredline" = "$currentline" -a "$wasmultiline" = 1 ]; then
 				amendedline="$(( $amendedline - 1 ))"
 			else
 				amendedline="$declaredline"
@@ -84,7 +86,7 @@ function _show_coverage {
 		while IFS= read line; do
 			hit="$(echo "$covcont" | grep -F "$file|$lineno|" | wc -l )"
 			trimmed="$(echo $line | sed -e s/function[^#{]*'\({\|$\)/;/g')"
-			trimmedx="$(echo ";"$trimmed";" | sed -e "s/fi;//g" | sed -e "s/done;//g" | sed -e "s/else;//g" | sed -e "s/{//g" | sed -e "s/}//g" | tr -s ";" ";" )"
+			trimmedx="$(echo ";"$trimmed";" | sed -e "s/fi;//g" | sed -e "s/done;//g" | sed -e "s/else;//g"  | sed -e "s/then;//g" | sed -e "s/{//g" | sed -e "s/}//g" | tr -s ";" ";" )"
 			if [ "$hit" -gt 0 ]; then
 				if [ "$(echo $line | cut -c 1)" = "@" ]; then
 					color=""
@@ -106,7 +108,11 @@ function _show_coverage {
 			echo -e "${color}$lineno\t$hit\t$line${NORMAL}"
 			lineno=$(( $lineno + 1 ))
 		done < "$file"
-		echo "covered $countmatched/$countnonempty ($(( 100 * $countmatched / $countnonempty  ))%)"
+		coverageperc=100
+		if [ "$countnonempty" -gt 0 ]; then
+			coverageperc="$(( 100 * $countmatched / $countnonempty ))"
+		fi
+		echo "covered $countmatched/$countnonempty (§coverageperc%)"
 		echo
 	done
 }

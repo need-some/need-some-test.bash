@@ -11,6 +11,6 @@ function testskipped() {
 }
 
 function testNotSkipped() {
-	exit 4
+	echo "not skipped"
 }
 

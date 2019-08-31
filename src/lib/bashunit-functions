@@ -14,6 +14,8 @@ COUNTFAIL=0
 COUNTERROR=0
 COUNTSKIPPED=0
 
+ORIGPATH="$PATH"
+
 function getfunctions() {
 	set | grep -F ' () ' | grep -E '() $' | sort | sed -e 's/ () //'
 }
@@ -48,7 +50,6 @@ function callfile() {
 					)"
 				fi
 				if [ -z "$skipped" ]; then
-					echo call test "$t $paramline" "$before_x" "$after_x" "$testname"
 					callmethod "$t $paramline" "$before_x" "$after_x" "$testname"
 				else
 					COUNTSUM=$(( $COUNTSUM + 1 ))
@@ -58,8 +59,8 @@ function callfile() {
 			done < <(echo "$parameters")
 		fi
 	done
-	for t in "$fct"; do
-		unset $t
+	for t in $fct; do
+		unset -f "$t"
 	done
 }
 
@@ -117,9 +118,19 @@ function execit {
 	echo "#!/bin/bash" > "$TEMPDIR/exec"
 
 init_extended_status
+
+	init-mockstore
+
 	echo "set -e" >> "$TEMPDIR/exec"
+	#DEBUG: echo 'export PS4='"'"'~|${BASH_SOURCE}|${LINENO}|COMMANDSTART|${BASH_COMMAND}|COMMANDEND|'"'" >> "$TEMPDIR/exec"
+	#DEBUG: echo "set -x" >> "$TEMPDIR/exec"
 	if [ ! -z "$cmd" ]; then
+		echo "export PATH=$TEMPDIR/mockpath" >> "$TEMPDIR/exec"
+		for c in echo grep cut cat tac test tr sed awk dirname basename xargs wc ls ln need-some-init; do
+			mock-origpath $c
+		done
 		echo "$cmd" >> "$TEMPDIR/exec"
+		echo "export PATH=$ORIGPATH" >> "$TEMPDIR/exec"	
 	fi
 	chmod +x "$TEMPDIR/exec"
 
@@ -155,4 +166,56 @@ function skipit {
 
 	close_extended_status
 }
+
+function init-mockstore {
+	#TODO: try without filesystem
+	echo "" > $TEMPDIR/mockstore
+	rm -rf $TEMPDIR/mockpath
+	mkdir $TEMPDIR/mockpath
+}
+
+function create-mock {
+
+	# mock lines from last to first
+	(
+	if [ ! -z "$2" ]; then
+		echo "$1|if $2; then"
+	fi
+	echo "$1|$3"
+	echo "$1|exit"
+	if [ ! -z "$2" ]; then
+		echo "$1|fi"
+	fi
+	) | tac >> $TEMPDIR/mockstore
+
+	/bin/rm -f $TEMPDIR/mockpath/$1
+	cat "$TEMPDIR/mockstore" | grep -F "$1|" | tac | cut -d "|" -f 2- > $TEMPDIR/mockpath/$1
+	/bin/chmod +x $TEMPDIR/mockpath/$1
+}
+
+function mock-function {
+	create-mock "$@"
+}
+
+export -f mock-function
+
+function mock-echo {
+	mock-function "$1" "$2" "echo \"$3\""
+}
+
+export -f mock-echo
+
+function mock-origpath {
+	mockcmd="$(export PATH=$ORIGPATH; which "$1")"
+	ln -s "$mockcmd" "$TEMPDIR/mockpath/$1"
+}
+
+export -f mock-origpath
+
+function enable-xtrace() {
+	export PS4='~|${BASH_SOURCE}|${LINENO}|COMMANDSTART|${BASH_COMMAND}|COMMANDEND|'
+	set -x
+	export SHELLOPTS
+}
+export -f enable-xtrace
 

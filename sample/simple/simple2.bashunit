@@ -4,15 +4,13 @@ function before() {
 	. "$NEEDSOME_TEST_TESTCASE_DIR/testee"
 }
 
-#it "do the sum test 1 1" '
-function sum11() {
+function simple_add() {
 	result=$(add 1 1)
 	expected=2
 	assert "equal" $expected -eq $result
 }
 
-#it "do the sub test 3 2" '
-function sum12() {
+function simple_sub() {
 	result=$(sub 3 2)
 	expected=1
 	assert "equal" $expected -eq $result

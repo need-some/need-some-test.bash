@@ -15,24 +15,28 @@ while true; do
 	fi
 done
 
-if [ -d "$1" ]; then
-	dir="$1"
-elif [ -f "$1" ]; then
-	callfile "$1"
-elif [ ! -z "$1" ]; then
-	echo "$1 is not a file or directory"
-	exit 1
-else
-	dir="$PWD"
+if [ "$#" -eq 0 ]; then
+	set -- "$PWD"
 fi
+while [ "$#" -gt 0 ]; do
+	if [ -d "$1" ]; then
+		dir="$1"
+	elif [ -f "$1" ]; then
+		callfile "$1"
+	elif [ ! -z "$1" ]; then
+		echo "$1 is not a file or directory"
+		exit 1
+	fi
 
-pattern="^.*.bashunit"
+	pattern="^.*.bashunit"
 
-if [ ! -z "$dir" ]; then
-	for file in $(find $dir -type f | grep -E "$pattern"); do
-		callfile $file
-	done
-fi
+	if [ ! -z "$dir" ]; then
+		for file in $(find $dir -type f | grep -E "$pattern"); do
+			callfile $file
+		done
+	fi
+	shift
+done
 
 if [ -z "$skipcoverage" ]; then
 	_show_coverage "$TEMPDIR/coverage"

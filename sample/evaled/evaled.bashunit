@@ -1,6 +1,18 @@
-function doit(){
+function test-with-evaledcommand(){
 	result="$($NEEDSOME_TEST_TESTCASE_DIR/afunction 1)"
 	expected="1
+hallo
+welt
+oh
+je
+mi
+ne
+hallo
+welt
+oh
+je
+mi
+ne
 hallo
 welt
 oh
