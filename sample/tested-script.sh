@@ -15,6 +15,6 @@ elif [ "$1" = "sub" ]; then
 	b1=$(( $b - 1 ))
 	echo $(( $a - $b ))
 else
-	echo "add|sub a b"
+	echo "add|sub a b" >&2
 	exit 99
 fi

@@ -134,7 +134,7 @@ init_extended_status
 	fi
 	chmod +x "$TEMPDIR/exec"
 
-	errors=$( . $TEMPDIR/exec )
+	errors=$( . $TEMPDIR/exec 2>&1 )
 	result=$?
 	if [ "$result" -ne 0 ]; then
 		if [ -z "$errors" ]; then
