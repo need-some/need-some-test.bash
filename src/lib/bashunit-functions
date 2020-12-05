@@ -126,7 +126,7 @@ init_extended_status
 	#DEBUG: echo "set -x" >> "$TEMPDIR/exec"
 	if [ ! -z "$cmd" ]; then
 		echo "export PATH=$TEMPDIR/mockpath" >> "$TEMPDIR/exec"
-		for c in echo grep cut cat tac test tr sed awk dirname basename xargs wc ls ln readlink need-some-init; do
+		for c in echo grep cut cat tac test head tail tr sed awk dirname basename xargs wc ls ln readlink need-some-init; do
 			mock-origpath $c
 		done
 		echo "$cmd" >> "$TEMPDIR/exec"
