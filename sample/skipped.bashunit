@@ -1,0 +1,21 @@
+#!/usr/bin/env bashunit
+
+# skip method and do not record it
+function notest() {
+	@noTest
+	exit 4
+}
+
+# skip method and record it as skipped
+function testskipped() {
+	@skip
+	exit 4
+}
+
+# call method which uses a skipped method
+function testNotSkipped() {
+	if (notest); then
+		assert "last call should be an error" 1 = 0
+	fi
+}
+

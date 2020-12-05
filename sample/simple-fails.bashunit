@@ -1,0 +1,31 @@
+#!/usr/bin/env bashunit
+
+#include testee before each test
+function before() {
+	. "$NEEDSOME_TEST_TESTCASE_DIR/tested-functions.sh"
+}
+
+#this test performs a method call but the assertion fails
+function failing-assert() {
+	@testName fail when asserting
+	result=$(add 1 1)
+	expected=3
+	assert "equal" $expected -eq $result
+}
+
+#this test tries to call a nonexisting method
+function failing-nosuchmethod() {
+	@testName no such method
+	result=$(mult 1 1)
+	expected=1
+	assert "equal" $expected -eq $result
+}
+
+#this test calls a script (not sourcing) and failes on error exit
+function error-call-script() {
+	@testName error on script
+	result="$($NEEDSOME_TEST_TESTCASE_DIR/tested-script.sh mult 1 1)"
+	expected=1
+	assert "equal" $expected -eq $result
+}
+

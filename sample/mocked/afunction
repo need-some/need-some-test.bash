@@ -1,9 +1,0 @@
-
-a="$1"
-
-if [ "$1" = "1a" ]; then
-	echo "$a" | sed -e s/a/A/g
-else
-	echo "$a" | sed -e s/a/A/g | sed -e "s/2/3/g"
-fi
-

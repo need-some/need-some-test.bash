@@ -1,0 +1,41 @@
+#!/usr/bin/env bashunit
+
+#include testee before each test
+function before() {
+	. "$NEEDSOME_TEST_TESTCASE_DIR/tested-functions.sh"
+}
+
+#this test doesnt do anything, it simply succeeds
+function success-empty() {
+	@testName "successful empty"
+}
+
+#this test performs a method call and successfully tests some condition
+function success-assert() {
+	@testName "successful assert on method call"
+	result=$(add 1 1)
+	expected=2
+	assert "equal" $expected -eq $result
+}
+
+#this test calls a script (not sourcing)
+function success-call-script() {
+	@testName successful assert on script call
+	result="$($NEEDSOME_TEST_TESTCASE_DIR/tested-script.sh add 1 1)"
+	expected=2
+	assert "equal" $expected -eq $result
+}
+
+#this test calls a script (not sourcing) and catches an error exit
+function catch-error-call-script() {
+	@testName expect error on script
+	
+	result="$(if ( $NEEDSOME_TEST_TESTCASE_DIR/tested-script.sh mult 1 1 2>&1 ); then
+		assert "error should be thrown" "1" = "1"
+	else
+		echo "error level $?"
+	fi;echo)"
+	assert "usage output" "$result" = $'add|sub a b\nerror level 99'
+}
+
+

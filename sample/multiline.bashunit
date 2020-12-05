@@ -1,0 +1,39 @@
+#!/usr/bin/env bashunit
+
+#include testee before each test
+function before() {
+	. "$NEEDSOME_TEST_TESTCASE_DIR/tested-functions.sh"
+	. "$NEEDSOME_TEST_TESTCASE_DIR/tested-functions-multiline.sh"
+}
+
+
+function test-compare-and-cover-multiline() {
+	result="$(multilineVars John Doe)"
+	expected="processing John Doe
+firstname: John
+lastname: Doe
+fullname: John Doe
+summary: 4"
+	assert "equal" "$expected" = "$result"
+}
+
+function test-eval-multiline() {
+	result="$(multilineEval add 2 3 )"
+	expected="add 2 3:5
+add 2+1 3+1:7"
+	assert "equal" "$expected" = "$result"
+}
+
+function test-eval-multiline-heredoc() {
+	result="$(multilineEvalHeredoc add 2 3 )"
+	expected="add 2 3:5
+add 2+1 3+1:7"
+	assert "equal" "$expected" = "$result"
+}
+
+function test-split-commands() {
+	result="$(multilineCommands)"
+	expected="result ok"
+	assert "equal" "$expected" = "$result"
+}
+

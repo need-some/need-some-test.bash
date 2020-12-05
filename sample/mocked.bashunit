@@ -1,0 +1,43 @@
+#!/usr/bin/env bashunit
+
+#include testee before each test
+function before() {
+	. "$NEEDSOME_TEST_TESTCASE_DIR/tested-functions.sh"
+}
+
+function test-mock {
+	# if tr is called with uppercase params, always return MOCK
+	mock-echo tr '[ "$1" = "a-z" -a "$2" = "A-Z" ]' "MOCK"
+	result="$(translateToUpper test1 test2)"
+	expected=$'MOCK\nMOCK'
+	assert "equal" "$expected" = "$result"
+}
+
+function test-mock-multiline {
+	# if tr is called with uppercase params, always return list
+	mock-echo tr '[ "$1" = "a-z" -a "$2" = "A-Z" ]' $'MOCK\nMORE\nAND MORE\n  AND  MORE  WITH  SPACE  '
+	result="$(translateToUpper test1)"
+	expected='MOCK|MORE|AND MORE|  AND  MORE  WITH  SPACE  '
+	assert "equal" "$expected" = "$result"
+}
+
+function test-mock-alternative {
+	# if tr is called with uppercase params, always return FAILED
+	mock-echo tr '[ "$1" = "a-z" -a "$2" = "A-Z" ]' "FAILED"
+	result="$(translateToUpper test1 test2)"
+	expected=$'ERROR\nERROR'
+	assert "equal" "$expected" = "$result"
+}
+
+function test-mock-3times {
+	# if tr is called with uppercase params, once return MOCK
+	mock-echo tr '[ "$MOCKRUN" = 1 -a "$1" = "a-z" -a "$2" = "A-Z" ]' "MOCK"
+	# if tr is called with uppercase params again, always return FAILED
+	mock-echo tr '[ "$MOCKRUN" = 2 -a "$1" = "a-z" -a "$2" = "A-Z" ]' "FAILED"
+	# if tr is called with uppercase params, once return MOCK
+	mock-echo tr '[ "$MOCKRUN" = 3 -a "$1" = "a-z" -a "$2" = "A-Z" ]' "MOCK2"
+	result="$(translateToUpper test1 test2 test3)"
+	expected=$'MOCK\nERROR\nMOCK2'
+	assert "equal" "$expected" = "$result"
+}
+
