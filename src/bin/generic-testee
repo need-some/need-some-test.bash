@@ -1,0 +1,96 @@
+#!/bin/bash
+
+p_nolines=1
+p_delay=""
+p_errlevel=0
+p_extlevel=OK
+p_extstate=""
+p_extmsg=""
+
+while [ true ]; do
+	if [ "$1" == "--errlevel" ]; then
+		p_errlevel=$2
+		shift 2
+	elif [ "$1" == "--extreport" ]; then
+		p_extstat=1
+		shift
+	elif [ "$1" == "--extlevel" ]; then
+		p_extlevel="$2"
+		shift 2
+	elif [ "$1" == "--extstate" ]; then
+		p_extstate="$2"
+		shift 2
+	elif [ "$1" == "--extmsg" ]; then
+		p_extmsg="$2"
+		shift 2
+	elif [ "$1" == "--ansicolor" ]; then
+		p_ansicolor=1
+		shift
+	elif [ "$1" == "--nolines" ]; then
+		p_nolines=$2
+		shift 2
+	elif [ "$1" == "--delay" ]; then
+		p_delay=$2
+		shift 2
+	elif [ "$1" == "--noeof" ]; then
+		p_noeof=1
+		shift
+	else
+		break
+	fi
+done
+
+if [ ! -z "${p_extstat}" ]; then
+	. need-some-init
+	init_extended_status
+fi
+
+doecho() {
+	p_extstat="$1"
+	shift
+	if [ ! -z "${p_extstat}" ]; then
+		echo "$@" >&3
+	else
+		echo "$@"
+	fi
+}
+
+line=0
+while [ $line -lt $p_nolines ]; do
+	if [ $line -gt 0 ]; then
+		doecho "$p_extstat"
+		if [ "$p_delay" != "" ]; then
+			sleep $p_delay
+		fi
+	fi
+	linemod=$(( $line % 3 ))
+	if [ -z "${p_ansicolor}" ]; then
+		if [ "$linemod" = 0 ]; then
+			doecho "$p_extstat" -n "Hello world, I need some test."
+		elif [ "$linemod" = 1 ]; then
+			doecho "$p_extstat" -n "the test is running."
+		else
+			doecho "$p_extstat" -n "and running..."
+		fi
+	else
+		if [ "$linemod" = 0 ]; then
+			doecho "$p_extstat" -e -n "Hello \033[0;31mworld\033[0m, I \033[0;32mneed some\033[0m test."
+		elif [ "$linemod" = 1 ]; then
+			doecho "$p_extstat" -e -n "the test is \033[0;35mrunning\033[0m."
+		else
+			doecho "$p_extstat" -e -n "and \033[0;35mrunning\033[0m..."
+		fi
+	fi
+	line=$(( $line + 1 ))
+done
+if [ -z "${p_noeof}" ]; then
+	doecho "$p_extstat" 
+fi
+
+if [ ! -z "${p_extstat}" ]; then
+	set_extended_status "$p_extlevel" "$p_extstate" "$p_extmsg"
+	close_extended_status
+fi
+
+exit ${p_errlevel}
+
