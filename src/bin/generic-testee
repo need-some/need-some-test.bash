@@ -63,19 +63,23 @@ while [ $line -lt $p_nolines ]; do
 			sleep $p_delay
 		fi
 	fi
-	linemod=$(( $line % 3 ))
+	linemod=$(( $line % 4 ))
 	if [ -z "${p_ansicolor}" ]; then
 		if [ "$linemod" = 0 ]; then
-			doecho "$p_extstat" -n "Hello world, I need some test."
+			doecho "$p_extstat" -e -n "Running Generic Testee $$\033"
 		elif [ "$linemod" = 1 ]; then
+			doecho "$p_extstat" -n "Hello world, I need some test."
+		elif [ "$linemod" = 2 ]; then
 			doecho "$p_extstat" -n "the test is running."
 		else
 			doecho "$p_extstat" -n "and running..."
 		fi
 	else
 		if [ "$linemod" = 0 ]; then
-			doecho "$p_extstat" -e -n "Hello \033[0;31mworld\033[0m, I \033[0;32mneed some\033[0m test."
+			doecho "$p_extstat" -e -n "Running Generic Testee \033[0;35m$$\033[0m"
 		elif [ "$linemod" = 1 ]; then
+			doecho "$p_extstat" -e -n "Hello \033[0;31mworld\033[0m, I \033[0;32mneed some\033[0m test."
+		elif [ "$linemod" = 2 ]; then
 			doecho "$p_extstat" -e -n "the test is \033[0;35mrunning\033[0m."
 		else
 			doecho "$p_extstat" -e -n "and \033[0;35mrunning\033[0m..."

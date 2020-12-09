@@ -112,7 +112,7 @@ function _show_coverage {
 		if [ "$countnonempty" -gt 0 ]; then
 			coverageperc="$(( 100 * $countmatched / $countnonempty ))"
 		fi
-		echo "covered $countmatched/$countnonempty (§coverageperc%)"
+		echo "covered $countmatched/$countnonempty ($coverageperc%)"
 		echo
 	done
 }
